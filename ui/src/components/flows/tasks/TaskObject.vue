@@ -173,7 +173,7 @@
                 }
             },
             isRequired(key) {
-                return this.schema.required.includes(key);
+                return this.schema.required && this.schema.required.includes(key);
             },
             isValidated(key) {
                 return (
@@ -212,7 +212,8 @@
     @import "../../../styles/_variable.scss";
 
     span.collapse-header {
-        border: 1px solid $table-border-color;
+        border: 1px solid var(--gray-100);
+        font-weight: bold;
         width: 100%;
         display: block;
     }
@@ -222,7 +223,7 @@
     }
 
     span.collapse-header {
-        padding: $table-cell-padding / 2;
+        padding: calc($table-cell-padding / 2);
     }
 
     .collapse {
@@ -231,7 +232,7 @@
 
     .collapse-object {
         padding: $label-margin-bottom;
-        background: lighten($light, 2%);
+        background: var(--light);
         margin-top: -$label-margin-bottom;
     }
 </style>

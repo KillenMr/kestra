@@ -76,6 +76,9 @@
                 this.$emit("input", this.value);
             },
             addItem() {
+                if (this.value === undefined) {
+                    this.value = [];
+                }
                 this.value.push(undefined);
             },
             removeItem(x) {
@@ -89,12 +92,12 @@
 
 .task-array {
     flex-wrap: nowrap;
-    background: lighten($light, 2%);
-    border: 1px solid $table-border-color;
-    padding: $table-cell-padding / 2;
+    background: var(--light);
+    border: 1px solid var(--table-border-color);
+    padding: calc($table-cell-padding / 2);
 
     .input-group-append {
-        margin-left: $table-cell-padding / 2;
+        margin-left: calc($table-cell-padding / 2);
 
         .btn {
             height: 38px;

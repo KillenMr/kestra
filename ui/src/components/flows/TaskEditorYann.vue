@@ -73,27 +73,27 @@
             };
         },
         computed: {
-        ...mapState("plugin", ["tasktask", "plugins"]),
-        taskModels() {
-            const taskModels = [];
-            for (const plugin of this.plugins || []) {
-                taskModels.push.apply(taskModels, plugin.tasks);
-            }
-            return taskModels;
-        },
-        pluginOverride() {
-            var pluginOverride = this.tasktask;
-            pluginOverride.schema.properties.properties = {
-                ["id"]: {
-                    type: "string",
-                    title: "Identifier of the task",
-                    $required: true,
-                },
-                ...this.tasktask.schema.properties.properties,
-            };
-            pluginOverride.schema.properties.required.push("id");
-            return pluginOverride;
-        },
+            ...mapState("plugin", ["tasktask", "plugins"]),
+            taskModels() {
+                const taskModels = [];
+                for (const plugin of this.plugins || []) {
+                    taskModels.push.apply(taskModels, plugin.tasks);
+                }
+                return taskModels;
+            },
+            pluginOverride() {
+                var pluginOverride = this.tasktask;
+                pluginOverride.schema.properties.properties = {
+                    ["id"]: {
+                        type: "string",
+                        title: "Identifier of the task",
+                        $required: true,
+                    },
+                    ...this.tasktask.schema.properties.properties,
+                };
+                pluginOverride.schema.properties.required.push("id");
+                return pluginOverride;
+            },
         },
         methods: {
             onInput(value) {
