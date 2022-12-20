@@ -1,118 +1,87 @@
 <template>
-    <div>
-        <div v-if="properties" class="task-value-wrapper">
-            <div
-                class="task-value-item"
-                :key="index"
-                v-for="(schema, key, index) in properties"
+    <el-form-item
+        :key="index"
+        v-if="properties"
+        v-for="(schema, key, index) in properties"
+    >
+        <template #label>
+            <span
+                class="d-flex"
             >
-                <b-form-group v-if="schema" label-for="todo">
-                    <template #label>
-                        <span
-                            class="d-flex"
-                            v-if="getType(schema) !== 'object'"
-                        >
-                            <span class="mr-auto no-collapse">
-                                <code>{{ getKey(key) }} </code>
-                                <kicon
-                                    class="kicon"
-                                    v-if="hasTooltip(schema)"
-                                    :tooltip="helpText(schema)"
-                                >
-                                    <help />
-                                </kicon>
-                            </span>
-                            <span>
-                                <b-badge variant="info">
-                                    {{ schema.type }}
-                                </b-badge>
-                            </span>
-                        </span>
-
-                        <span
-                            v-else
-                            class="collapse-header"
-                            v-b-toggle="'collapse' + getKey(key)"
-                        >
-                            <code>{{ getKey(key) }} </code>
-
-                            <kicon
-                                class="kicon"
-                                v-if="hasTooltip(schema)"
-                                :tooltip="helpText(schema)"
-                            >
-                                <help />
-                            </kicon>
-                        </span>
-                    </template>
-
-                    <div
-                        :class="
-                            getType(schema) === 'object'
-                                ? 'collapse-object'
-                                : ''
-                        "
-                        :id="'collapse' + getKey(key)"
-                    >
-                        <div
-                            :id="getKey(key)"
-                            :is="`task-${getType(schema)}`"
-                            :value="getPropertiesValue(key)"
-                            :root="getKey(key)"
-                            @input="onInput(key, $event)"
-                            :schema="schema"
-                            :required="isRequired(key)"
-                            :definitions="definitions"
-                        />
-                        <b-form-text
-                            text-variant="danger"
-                            v-if="isValidated(key)"
-                        >
-                            This field is required
-                        </b-form-text>
-                    </div>
-                </b-form-group>
-            </div>
-        </div>
-        <div v-else>
-            <editor
-                :value="editorValue"
-                ref="editor"
-                :navbar="false"
-                :full-height="false"
-                theme="vs"
-                :input="true"
-                @focusout="onEditorInput"
-                lang="yaml"
-            />
-        </div>
-    </div>
+                <span class="me-auto">
+                    <code>{{ getKey(key) }}</code>&nbsp;
+                    <el-tooltip v-if="hasTooltip(schema)" :persistent="false" transition="" :hide-after="0">
+                        <template #content>
+                            <markdown class="markdown-tooltip" :source="helpText(schema)" />
+                        </template>
+                        <help />
+                    </el-tooltip>
+                </span>
+                <span>
+                    <el-tag disable-transitions type="info" size="small">
+                        {{ getType(schema, key) }}
+                    </el-tag>
+                </span>
+            </span>
+        </template>
+        <component
+            :is="`task-${getType(schema, key)}`"
+            :model-value="getPropertiesValue(key)"
+            @update:model-value="onInput(key, $event)"
+            :root="getKey(key)"
+            :schema="schema"
+            :required="isRequired(key)"
+            :definitions="definitions"
+        />
+    </el-form-item>
+    <template v-else>
+        <task-dynamic
+            :model-value="editorValue"
+            :root="root"
+            :schema="schema"
+            :definitions="definitions"
+        />
+    </template>
 </template>
+
 <script>
-    import Vue from "vue";
-    import Task from "../../../mixins/Task";
-    import Information from "vue-material-design-icons/InformationOutline";
-    import Help from "vue-material-design-icons/HelpBox";
-    import Kicon from "../../Kicon";
-    import Editor from "../../inputs/Editor";
+    import {toRaw} from "vue";
+    import Task from "./Task";
+    import Information from "vue-material-design-icons/InformationOutline.vue";
+    import Help from "vue-material-design-icons/HelpBox.vue";
+    import Kicon from "../../Kicon.vue";
+    import Editor from "../../inputs/Editor.vue";
     import YamlUtils from "../../../utils/yamlUtils";
+    import Markdown from "../../layout/Markdown.vue";
+    import TaskArray from "./TaskArray.vue";
+    import TaskBoolean from "./TaskBoolean.vue";
+    import TaskDict from "./TaskDict.vue";
+    import TaskDynamic from "./TaskDynamic.vue";
+    import TaskEnum from "./TaskEnum.vue";
+    import TaskNumber from "./TaskNumber.vue";
+    import TaskString from "./TaskString.vue";
+    // import TaskTask from "./TaskTask.vue";
 
     export default {
+        name: "TaskObject",
         mixins: [Task],
-        components: {Information, Help, Kicon, Editor},
-        created() {
-            let local = this.value;
-
-            if (local === undefined) {
-                local = {};
-            }
-            this.$emit("input", local);
+        components: {
+            Information,
+            Help,
+            Kicon,
+            Editor,
+            Markdown,
+            TaskArray,
+            TaskBoolean,
+            TaskDict,
+            TaskDynamic,
+            TaskEnum,
+            TaskNumber,
+            TaskString,
+            // TaskTask,
         },
+        emits: ["update:modelValue"],
         props: {
-            requireds: {
-                type: Array,
-                default: () => [],
-            },
             definitions: {
                 type: Object,
                 default: () => undefined
@@ -129,13 +98,15 @@
                     ) {
                         return undefined;
                     }
+
                     const properties = this.schema.properties
-                    for(let prop in properties){
-                        if(Object.prototype.hasOwnProperty.call(properties[prop],"$ref")){
-                            properties[prop] = this.definitions[properties[prop].$ref.toString().replace("#/$defs/","")]
+
+                    for (let prop in properties) {
+                        if (Object.prototype.hasOwnProperty.call(properties[prop], "$ref")) {
+                            properties[prop] = this.definitions[properties[prop].$ref.toString().replace("#/$defs/", "")]
                         }
-                        if(properties[prop].type == "array" && Object.prototype.hasOwnProperty.call(properties[prop].items,"$ref")){
-                            properties[prop].items = this.definitions[properties[prop].items.$ref.toString().replace("#/$defs/","")]
+                        if (properties[prop].type === "array" && Object.prototype.hasOwnProperty.call(properties[prop].items, "$ref")) {
+                            properties[prop].items = this.definitions[properties[prop].items.$ref.toString().replace("#/$defs/", "")]
                         }
                     }
                     return properties
@@ -144,36 +115,30 @@
                 return undefined;
             },
             editorValue() {
-                const stringify = YamlUtils.stringify(this.value);
+                const stringify = YamlUtils.stringify(toRaw(this.modelValue));
                 return stringify.trim() === "{}" ? "" : stringify;
             },
         },
+
         methods: {
             getPropertiesValue(properties) {
-                return this.value && this.value[properties]
-                    ? this.value[properties]
+                return this.modelValue && this.modelValue[properties]
+                    ? this.modelValue[properties]
                     : undefined;
             },
             onInput(properties, value) {
-                if (this.value !== undefined) {
-                    Vue.set(this.value, properties, value);
-                    this.$emit("input", this.value);
-                } else {
-                    Vue.set(this.value, properties, value);
-                    this.$emit("input", this.value);
-                }
+                const currentValue = this.modelValue || {};
+                currentValue[properties] = value;
+                this.$emit("update:modelValue", currentValue);
             },
             onEditorInput(value) {
                 try {
-                    this.$emit("input", YamlUtils.parse(value));
+                    this.$emit("update:modelValue", YamlUtils.parse(value));
                 } catch (err) {
                     this.$toast().warning(err.message, this.$t("invalid yaml"));
 
-                    return this.value;
+                    return this.modelValue;
                 }
-            },
-            isRequired(key) {
-                return this.schema.required && this.schema.required.includes(key);
             },
             isValidated(key) {
                 return (
@@ -187,8 +152,8 @@
             },
             helpText(schema) {
                 return (
-                    (schema.title ? schema.title : "") +
-                    (schema.title && schema.description ? "<br /><br />" : "") +
+                    (schema.title ? "**" + schema.title + "**" : "") +
+                    (schema.title && schema.description ? "\n" : "") +
                     (schema.description ? schema.description : "")
                 );
             },
@@ -209,30 +174,31 @@
     };
 </script>
 <style lang="scss" scoped>
-    @import "../../../styles/_variable.scss";
+    //@import "../../../styles/_variable.scss";
 
-    span.collapse-header {
-        border: 1px solid var(--gray-100);
-        font-weight: bold;
-        width: 100%;
-        display: block;
-    }
+    //span.collapse-header {
+    //    border: 1px solid var(--gray-100);
+    //    font-weight: bold;
+    //    width: 100%;
+    //    display: block;
+    //}
+    //
+    //.kicon {
+    //    display: inline;
+    //}
+    //
+    //span.collapse-header {
+    //    //padding: calc($table-cell-padding / 2);
+    //}
+    //
+    //.collapse {
+    //    transition: none;
+    //}
+    //
+    //.collapse-object {
+    //    //padding: $label-margin-bottom;
+    //    background: var(--light);
+    //    //margin-top: -$label-margin-bottom;
+    //}
 
-    .kicon {
-        display: inline;
-    }
-
-    span.collapse-header {
-        padding: calc($table-cell-padding / 2);
-    }
-
-    .collapse {
-        transition: none;
-    }
-
-    .collapse-object {
-        padding: $label-margin-bottom;
-        background: var(--light);
-        margin-top: -$label-margin-bottom;
-    }
 </style>

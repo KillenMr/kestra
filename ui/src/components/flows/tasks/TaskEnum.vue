@@ -1,26 +1,23 @@
 <template>
-    <div>
-        <v-select
-            :value="value"
-            @input="onInput"
-            :options="schema.enum"
-            class="task-select"
+    <el-select
+        :model-value="values"
+        @update:model-value="onInput"
+        filterable
+        clearable
+        :persistent="false"
+        placeholder=" "
+    >
+        <el-option
+            v-for="item in schema.enum"
+            :key="item"
+            :label="item"
+            :value="item"
         />
-    </div>
+    </el-select>
 </template>
 <script>
-    import Task from "../../../mixins/Task";
+    import Task from "./Task";
     export default {
         mixins: [Task],
-        methods: {
-            onInput(value) {
-                this.$emit("input", value);
-            }
-        }
     };
 </script>
-<style scoped>
-.task-select {
-    width: 100%;
-}
-</style>

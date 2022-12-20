@@ -20,15 +20,24 @@
                 </el-button>
             </template>
 
-            <editor
-                ref="editor"
-                v-if="taskYaml"
-                @save="saveTask"
-                v-model="taskYaml"
-                :full-height="false"
-                :navbar="false"
-                lang="yaml"
-            />
+            <el-tabs v-if="taskYaml" v-model="activeTabs">
+                <el-tab-pane label="Source" name="source">
+                    <editor
+                        ref="editor"
+                        @save="saveTask"
+                        v-model="taskYaml"
+                        :full-height="false"
+                        :navbar="false"
+                        lang="yaml"
+                    />
+                </el-tab-pane>
+                <el-tab-pane label="Form" name="form">
+                    <task-editor
+                        ref="editor"
+                        v-model="taskYaml"
+                    />
+                </el-tab-pane>
+            </el-tabs>
         </el-drawer>
     </component>
 </template>
@@ -41,12 +50,13 @@
 <script>
     import YamlUtils from "../../../utils/yamlUtils";
     import Editor from "../../../components/inputs/Editor.vue";
+    import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import {canSaveFlowTemplate} from "../../../utils/flowTemplate";
     import {mapState} from "vuex";
     import Utils from "../../../utils/utils";
 
     export default {
-        components: {Editor},
+        components: {Editor, TaskEditor},
         props: {
             component: {
                 type: String,
@@ -116,6 +126,7 @@
                 uuid: Utils.uid(),
                 taskYaml: undefined,
                 isModalOpen: false,
+                activeTabs: "form",
             };
         },
         created() {

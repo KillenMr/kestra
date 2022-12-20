@@ -1,28 +1,27 @@
 <template>
-    <div>
-        <b-form-input
-            :state="isValid"
-            :min="schema.min"
-            :max="schema.max"
-            :step="schema.step"
-            type="number"
-            :value="value"
-            @input="$emit('input', $event)"
-        />
-    </div>
+    <el-input-number
+        :model-value="values"
+        @update:model-value="onInput"
+        :state="isValid"
+        :min="schema.min"
+        :max="schema.max"
+        :step="schema.step"
+        type="number"
+    />
 </template>
+
 <script>
-    import Task from "../../../mixins/Task"
+    import Task from "./Task"
     export default {
         mixins: [Task],
         computed: {
             isValid() {
-                if (this.required && this.data === undefined) {
+                if (this.required && this.modelValue === undefined) {
                     return false;
                 }
 
-                if (this.data !== undefined) {
-                    return !isNaN(this.data)
+                if (this.modelValue !== undefined) {
+                    return !isNaN(this.modelValue)
                 }
 
                 return true;
@@ -30,6 +29,3 @@
         }
     };
 </script>
-<style scoped>
-
-</style>

@@ -1,14 +1,15 @@
 <template>
-    <b-form-checkbox
-        :value="value"
-        @input="$emit('input', $event)"
+    <el-checkbox
+        :model-value="values"
+        @update:model-value="onInput"
+        :value="true"
     />
 </template>
+
 <script>
-    import Task from "../../../mixins/Task";
+    import Task from "./Task";
+
     export default {
         mixins: [Task],
     };
 </script>
-<style scoped>
-</style>

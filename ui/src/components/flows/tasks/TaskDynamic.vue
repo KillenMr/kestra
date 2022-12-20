@@ -1,21 +1,15 @@
 <template>
-    <b-form-textarea
-        v-model="value.data"
-        placeholder="Dynamic content here"
-        rows="8"
-        class="dynamic-field"
+    <el-input
+        type="textarea"
+        autosize
+        :model-value="modelValue"
+        @update:model-value="onInput"
+        placeholder=" "
     />
 </template>
 <script>
-    import Task from "../../../mixins/Task";
+    import Task from "./Task";
     export default {
         mixins: [Task],
     };
 </script>
-<style scoped>
-.dynamic-field {
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-}
-</style>

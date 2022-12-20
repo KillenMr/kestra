@@ -17,10 +17,9 @@
     </div>
 </template>
 <script lang="ts">
-// import Vue from "vue";
     import TaskEditorYann from "../TaskEditorYann.vue";
-    import Utils from "../../../utils/utils";
-    import Task from "../../../mixins/Task";
+    import Utils from "../../../utils/utils.js";
+    import Task from "./Task.js";
 
     export default {
         mixins: [Task],
@@ -41,10 +40,10 @@
 </script>
 
 <style lang="scss" scoped>
-.full-width {
-    flex-grow: 1;
-}
-.main {
-    display: flex;
-}
+    .full-width {
+        flex-grow: 1;
+    }
+    .main {
+        display: flex;
+    }
 </style>

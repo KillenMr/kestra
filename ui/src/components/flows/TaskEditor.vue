@@ -1,79 +1,60 @@
 <template>
-    <div class="top-space">
-        <b-row>
-            <b-col md="12">
-                <b-list-group class="mb-3">
-                    <b-list-group-item variant="primary">
-                        <b-row>
-                            <b-col>
-                                <v-select
-                                    v-model="selectedTaskModel"
-                                    placeholder="Select a task model"
-                                    :options="taskModels"
-                                    @input="onModelSelect"
-                                    class="ns-selector float-left"
-                                />
-                            </b-col>
-                        </b-row>
-                    </b-list-group-item>
-                </b-list-group>
+    <el-select
+        v-model="selectedTaskType"
+        placeholder="Select a task model"
+        filterable
+        :persistent="false"
+        @update:model-value="onTaskTypeSelect"
+        class="mb-3"
+    >
+        <el-option
+            v-for="item in taskModels.sort()"
+            :key="item"
+            :label="item"
+            :value="item"
+        />
+    </el-select>
 
-                <task-root
-                    v-if="plugin"
-                    :value="value"
-                    @input="onInput"
-                    :schema="pluginOverride.schema"
-                    :definitions="pluginOverride.schema.definitions"
-                />
-            </b-col>
-            <b-col md="6">
-                <pre>{{ value }}</pre>
-
-                <pre v-if="plugin">{{ plugin.schema.properties }}</pre>
-            </b-col>
-        </b-row>
-    </div>
+    <task-root
+        v-if="plugin"
+        name="root"
+        :model-value="taskObject"
+        @update:model-value="onInput"
+        :schema="pluginOverride.schema"
+        :definitions="pluginOverride.schema.definitions"
+    />
 </template>
 <script>
     import {mapState} from "vuex";
-    import JsYaml from "js-yaml";
     import TaskRoot from "./tasks/TaskRoot";
+    import YamlUtils from "@/utils/yamlUtils";
 
     export default {
         components: {
             TaskRoot,
         },
+        emits: ["update:modelValue"],
         created() {
-            this.JsYaml = JsYaml;
-            this.selectedTaskModel = this.tasktype
-                ? this.tasktype
-                : "io.kestra.core.tasks.flows.Parallel";
-            this.value = this.taskobject ? this.taskobject : {};
+            this.taskObject = YamlUtils.parse(this.modelValue);
+
             this.$store.dispatch("plugin/list");
+
+            this.selectedTaskType = this.taskObject.type;
             this.$store.dispatch("plugin/load", {
-                cls: this.selectedTaskModel,
+                cls: this.selectedTaskType,
             });
         },
         props: {
-            tasktype: {
+            modelValue : {
                 type: String,
-                required: false,
-                default: undefined,
-            },
-            taskobject: {
-                type: Object,
                 required: false,
                 default: undefined,
             },
         },
         data() {
             return {
-                selected: undefined,
-                selectedTaskModel: undefined,
-                value: {},
-                tasksList: {
-                    tasks: [],
-                },
+                selectedTaskType: undefined,
+                taskObject: undefined,
             };
         },
         computed: {
@@ -86,7 +67,7 @@
                 return taskModels;
             },
             pluginOverride() {
-                var pluginOverride = this.plugin;
+                const pluginOverride = this.plugin;
                 pluginOverride.schema.properties.properties = {
                     ["id"]: {
                         type: "string",
@@ -95,30 +76,32 @@
                     },
                     ...this.plugin.schema.properties.properties,
                 };
+
+                if (pluginOverride.schema.properties.required === undefined) {
+                    pluginOverride.schema.properties.required = []
+                }
+
                 pluginOverride.schema.properties.required.push("id");
+
                 return pluginOverride;
             },
         },
         methods: {
             onInput(value) {
-                this.value = value;
-                this.$emit("updateTask", value);
+                this.taskObject = value;
+                this.$emit("update:modelValue", YamlUtils.stringify(value));
             },
-            onModelSelect() {
+            onTaskTypeSelect() {
                 this.$store.dispatch("plugin/load", {
-                    cls: this.selectedTaskModel,
+                    cls: this.selectedTaskType,
                 });
-                this.value = {id: this.value.id, type: this.selectedTaskModel};
-                this.$emit("updateTask", this.value);
+
+                this.onInput({
+                    id: this.taskObject.id,
+                    type: this.selectedTaskType
+                });
             },
         },
     };
 </script>
-<style scoped>
-.ns-selector {
-    width: 100%;
-}
-.top-space {
-    margin-top: 20px;
-}
-</style>
+

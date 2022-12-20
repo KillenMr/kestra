@@ -1,58 +1,86 @@
 <template>
-    <div v-if="value.additionalProperties.type">
-        <b-row v-for="(item, x) in items" :key="x">
-            <b-col md="3">
-                <b-form-input v-model="item.key" />
-            </b-col>
-            <b-col md="9">
-                <b-input-group class="d-flex">
-                    <div class="flex-grow-1" :is="`task-${value.additionalProperties.type}`" :value="item" />
-                    <div class="actions">
-                        <b-button @click="addItem">
-                            <plus />
-                        </b-button>
-                        <b-button @click="remove(x)">
-                            <minus />
-                        </b-button>
-                    </div>
-                </b-input-group>
-            </b-col>
-        </b-row>
+    <div class="d-flex w-100" v-for="(item, key) in values" :key="key">
+
+        <div class="flex-fill flex-grow-1 w-100 me-2">
+            <el-input
+                :model-value="key"
+            />
+        </div>
+        <div class="flex-fill flex-grow-1 w-100 me-2">
+            <component
+                :is="`task-${getType(schema.additionalProperties)}`"
+                :model-value="item"
+                @update:model-value="onInput(key, $event)"
+                :root="getKey(key)"
+                :schema="schema.additionalProperties"
+                :required="isRequired(key)"
+                :definitions="definitions"
+            />
+        </div>
+        <div class="flex-shrink-1">
+            <el-button-group class="d-flex flex-nowrap">
+                <el-button :icon="Plus" @click="addItem" />
+                <el-button :icon="Minus" @click="removeItem(key)" :disabled="key === 0 && values.length === 1" />
+            </el-button-group>
+        </div>
     </div>
 </template>
 
-<script>
-    import Task from "../../../mixins/Task";
+<script setup>
     import Plus from "vue-material-design-icons/Plus";
     import Minus from "vue-material-design-icons/Minus";
+</script>
+
+<script>
+    import Task from "./Task";
+    import TaskArray from "./TaskArray.vue";
+    import TaskBoolean from "./TaskBoolean.vue";
+    import TaskDynamic from "./TaskDynamic.vue";
+    import TaskEnum from "./TaskEnum.vue";
+    import TaskNumber from "./TaskNumber.vue";
+    import TaskObject from "./TaskObject.vue";
+    import TaskString from "./TaskString.vue";
 
     export default {
+        name: "TaskDict",
         mixins: [Task],
-        components: {Plus, Minus},
-        data () {
-            return {
-                items: [{data:"", key: ""}]
+        components: {
+            TaskArray,
+            TaskBoolean,
+            TaskDynamic,
+            TaskEnum,
+            TaskNumber,
+            TaskObject,
+            TaskString,
+            // TaskTask,
+        },
+        emits: ["update:modelValue"],
+        props: {
+            definitions: {
+                type: Object,
+                default: () => undefined
             }
         },
-        created() {
-            this.value.data = []
+        values() {
+            if (this.modelValue === undefined) {
+                return {key: "", data: undefined};
+            }
+
+            return this.modelValue;
         },
         methods:{
             addItem() {
-                this.items.push({
-                    data: "",
-                    type:this.type,
-                })
-                this.$forceUpdate()
+                const local = this.modelValue;
+                local[undefined] = undefined;
+
+                this.$emit("update:modelValue", local);
             },
-            remove(x) {
-                this.items.splice(x, 1)
+            removeItem(x) {
+                const local = this.modelValue;
+                delete local[x];
+
+                this.$emit("update:modelValue", local);
             }
         }
     };
 </script>
-<style scoped>
-.actions {
-    margin-left: 10px;
-}
-</style>
